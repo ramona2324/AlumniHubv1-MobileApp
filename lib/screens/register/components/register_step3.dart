@@ -1,20 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:alumnihubv1/screens/register/components/review_registration.dart';
 import '../../../components/welcome_text.dart';
 import '../../../constants.dart';
+import '../../../models/registration_data.dart';
+import './review_registration.dart';
 
 class RegisterStep3 extends StatefulWidget {
-  final String fullName;
-  final String email;
-  final String phone;
-  final String educationalBackground;
+  final RegistrationData registrationData;
 
   const RegisterStep3({
     super.key,
-    required this.fullName,
-    required this.email,
-    required this.phone,
-    required this.educationalBackground,
+    required this.registrationData,
   });
 
   @override
@@ -22,9 +17,11 @@ class RegisterStep3 extends StatefulWidget {
 }
 
 class _RegisterStep3State extends State<RegisterStep3> {
+  final _formKey = GlobalKey<FormState>();
   bool isEmployed = false;
   String? selectedWorkSetup;
   String? employmentType;
+
   final TextEditingController workLocationController = TextEditingController();
   final TextEditingController employerNameController = TextEditingController();
   final TextEditingController employerEmailController = TextEditingController();
@@ -43,12 +40,33 @@ class _RegisterStep3State extends State<RegisterStep3> {
     'Internship',
   ];
 
-  final _formKey = GlobalKey<FormState>();
-
   OutlineInputBorder _buildBorder() {
     return const OutlineInputBorder(
       borderRadius: BorderRadius.all(Radius.circular(8)),
     );
+  }
+  
+  void _proceedToReview() {
+    if (_formKey.currentState!.validate()) {
+      // Update registration data with employment information
+      widget.registrationData
+          ..isEmployed = isEmployed
+          ..workSetup = selectedWorkSetup
+          ..employmentType = employmentType
+          ..employerName = employerNameController.text
+          ..employerEmail = employerEmailController.text
+          ..companyName = companyNameController.text
+          ..workLocation = workLocationController.text;
+      
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ReviewRegistration(
+            registrationData: widget.registrationData,
+          ),
+        ),
+      );
+    }
   }
 
   @override
@@ -57,9 +75,7 @@ class _RegisterStep3State extends State<RegisterStep3> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context); // Navigate back to the previous step
-          },
+          onPressed: () => Navigator.pop(context),
         ),
         title: const Text("Register"),
       ),
@@ -90,17 +106,6 @@ class _RegisterStep3State extends State<RegisterStep3> {
                           });
                         },
                       ),
-                      const Text("Yes"),
-                      Radio<bool>(
-                        value: false,
-                        groupValue: isEmployed,
-                        onChanged: (value) {
-                          setState(() {
-                            isEmployed = value!;
-                            selectedWorkSetup = null; // Reset work setup if unemployed
-                          });
-                        },
-                      ),
                       const Text("No"),
                     ],
                   ),
@@ -108,62 +113,57 @@ class _RegisterStep3State extends State<RegisterStep3> {
 
                   if (isEmployed) ...[
                     // Work Setup Field
-                    _buildDropdownField("Work Setup", workSetupOptions, selectedWorkSetup, (value) {
-                      setState(() {
-                        selectedWorkSetup = value;
-                      });
-                    }),
+                    _buildDropdownField(
+                        "Work Setup",
+                        workSetupOptions,
+                        selectedWorkSetup,
+                        (value) => setState(() => selectedWorkSetup = value)
+                    ),
                     const SizedBox(height: 16),
 
                     // Nature of Employment Field
-                    _buildDropdownField("Nature of Employment", employmentTypes, employmentType, (value) {
-                      setState(() {
-                        employmentType = value;
-                      });
-                    }),
+                    _buildDropdownField(
+                        "Nature of Employment",
+                        employmentTypes,
+                        employmentType,
+                        (value) => setState(() => employmentType = value)
+                    ),
                     const SizedBox(height: 16),
 
                     // Employer Name Field
-                    _buildTextField(employerNameController, "Employer Name", "Enter your employer's name"),
+                    _buildTextField(
+                        employerNameController,
+                        "Employer Name",
+                        "Enter your employer's name"
+                    ),
                     const SizedBox(height: 16),
 
                     // Employer Email Field
-                    _buildTextField(employerEmailController, "Employer Email", "Enter your employer's email"),
+                    _buildTextField(
+                        employerEmailController,
+                        "Employer Email",
+                        "Enter your employer's email"
+                    ),
                     const SizedBox(height: 16),
 
                     // Company Name Field
-                    _buildTextField(companyNameController, "Company Name", "Enter your company name"),
+                    _buildTextField(
+                        companyNameController,
+                        "Company Name",
+                        "Enter your company name"
+                    ),
                     const SizedBox(height: 16),
 
-                    // Work Location Field
-                    _buildTextField(workLocationController, "Work Location", "Enter your work location"),
+                    _buildTextField(
+                        workLocationController,
+                        "Work Location",
+                        "Enter your work location"
+                    ),
                     const SizedBox(height: 16),
                   ],
 
                   ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        // Navigate to the review step
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ReviewRegistration(
-                              fullName: widget.fullName,
-                              email: widget.email,
-                              phone: widget.phone,
-                              educationalBackground: widget.educationalBackground,
-                              isEmployed: isEmployed,
-                              selectedWorkSetup: selectedWorkSetup,
-                              employmentType: employmentType,
-                              employerName: employerNameController.text,
-                              employerEmail: employerEmailController.text,
-                              companyName: companyNameController.text,
-                              workLocation: workLocationController.text,
-                            ),
-                          ),
-                        );
-                      }
-                    },
+                    onPressed: _processToReview,
                     child: const Text("Submit Registration"),
                   ),
                 ],
@@ -226,5 +226,14 @@ class _RegisterStep3State extends State<RegisterStep3> {
         ),
       ],
     );
+  }
+
+  @override
+  void dispose() {
+    workLocationController.dispose();
+    employerNameController.dispose();
+    employerEmailController.dispose();
+    companyNameController.dispose();
+    super.dispose();
   }
 }
