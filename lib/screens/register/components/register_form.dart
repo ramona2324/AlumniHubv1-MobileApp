@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../services/auth_service.dart';
 import 'package:intl/intl.dart';
 import 'register_step2.dart';
 
@@ -11,8 +12,14 @@ class RegisterForm extends StatefulWidget {
 
 class _RegisterFormState extends State<RegisterForm> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _birthdayController = TextEditingController();
-  final TextEditingController _ageController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _middleNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _birthdayController = TextEditingController();
+  final _ageController = TextEditingController();
+  final _addressController = TextEditingController();
   String? _selectedGender;
 
   // Method to calculate age from birthdate
@@ -50,8 +57,33 @@ class _RegisterFormState extends State<RegisterForm> {
     );
   }
 
+  void _proceedToNextStep() {
+    if (_formKey.currentState?.validate() ?? false) {
+      final registrationData = RegistrationData()
+          ..firstName = _firstNameController.text
+          ..middleName = _middleNameController.text
+          ..lastName = _lastNameController.text
+          ..email = _emailController.text
+          ..phoneNumber = _phoneController.text
+          ..gender = _selectedGender.text
+          ..birthday = DateFormat('yyyy-MM-dd').parse(_birthdayController.text)
+          ..age = int.tryParse(_ageController.text)
+          ..address = _addressController.text;
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => RegisterStep2(
+            registrationData: registrationData,
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Update your TextFormField widgets to use the controllers
     return Form(
       key: _formKey,
       autovalidateMode: AutovalidateMode.disabled,
