@@ -1,6 +1,8 @@
+import 'package:alumnihubv1/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'constants.dart';
 import 'screens/onboarding/onboarding_screen.dart';
+import 'screens/home/home_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -35,7 +37,18 @@ class MyApp extends StatelessWidget {
           hintStyle: TextStyle(color: bodyTextColor),
         ),
       ),
-      home: const OnboardingScreen(),
+      home: FutureBuilder<bool>(
+          future: AuthService().isLoggedIn(),
+        builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const CircularProgressIndicator();
+            }
+
+            return snapshot.data == true
+                ? const HomeScreen() // Your dashboard screen
+                : const OnboardingScreen();
+        },
+      ),
     );
   }
 }
