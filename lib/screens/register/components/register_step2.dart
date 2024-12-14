@@ -1,10 +1,16 @@
-import 'package:alumnihubv1/screens/Register/components/register_step3.dart';
 import 'package:flutter/material.dart';
 import '../../../components/welcome_text.dart';
 import '../../../constants.dart';
+import '../../../models/registration_data.dart';
+import './register_step3.dart';
 
 class RegisterStep2 extends StatefulWidget {
-  const RegisterStep2({super.key});
+  final RegistrationData registrationData;
+
+  const RegisterStep2({
+    super.key,
+    required this.registrationData,
+});
 
   @override
   State<RegisterStep2> createState() => _RegisterStep2State();
@@ -12,6 +18,9 @@ class RegisterStep2 extends StatefulWidget {
 
 class _RegisterStep2State extends State<RegisterStep2> {
   final _formKey = GlobalKey<FormState>();
+  final _majorController = TextEditingController();
+  final _yearGraduatedController = TextEditingController();
+
   final List<String> campuses = ["Tagum Campus", "Mabini Campus"];
   final List<String> colleges = [
     "College of Teacher Education and Technology",
@@ -32,15 +41,32 @@ class _RegisterStep2State extends State<RegisterStep2> {
   String? selectedCampus;
   String? selectedCollege;
   String? selectedProgram;
-  String fullName = "";
-  String email = "";
-  String phone = "";
-  String educationalBackground = "";
 
   OutlineInputBorder _buildBorder() {
     return const OutlineInputBorder(
       borderRadius: BorderRadius.all(Radius.circular(8)),
     );
+  }
+
+  void _proceedToNextStep(){
+    if (_formKey.currentState?.validate() ?? false) {
+      // Update registration data with academic information
+      widget.registrationData
+          ..campus = selectedCampus
+          ..college = selectedCollege
+          ..program = selectedProgram
+          ..major = _majorController.text
+          ..yearGraduated = int.tryParse(_yearGraduatedController.text);
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => RegisterStep3(
+            registrationData: widget.registrationData,
+          ),
+        ),
+      );
+    }
   }
 
   @override
@@ -147,6 +173,7 @@ class _RegisterStep2State extends State<RegisterStep2> {
                           const SizedBox(height: 8),
 
                           TextFormField(
+                            controller: _majorController,
                             decoration: InputDecoration(
                               labelText: "Major",
                               border: _buildBorder(),
@@ -164,6 +191,7 @@ class _RegisterStep2State extends State<RegisterStep2> {
                       Column(
                         children: [
                           TextFormField(
+                            controller: _yearGraduatedController,
                             decoration: InputDecoration(
                               labelText: "Year Graduated",
                               border: _buildBorder(),
@@ -171,28 +199,21 @@ class _RegisterStep2State extends State<RegisterStep2> {
                             style: const TextStyle(fontSize: 14),
                             keyboardType: TextInputType.number,
                             textInputAction: TextInputAction.done,
-                            validator: (value) => value!.isEmpty ? "Enter your graduation year" : null,
+                            validator: (value) {
+                              if (value!.isEmpty) return "Enter your graduation year";
+                              final year = int.tryParse(value);
+                              if (year == null) return "Enter a valid year";
+                              if (year < 1900 || year > DateTime.now().year) {
+                                return "Enter a valid graduation year";
+                              }
+                              return null;
+                            },
                           ),
                           const SizedBox(height: 24),
 
                           // Next Button
                           ElevatedButton(
-                            onPressed: () {
-                              if (_formKey.currentState?.validate() == true) {
-                                // Navigate to RegisterStep3 with required parameters
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => RegisterStep3(
-                                      fullName: fullName,
-                                      email: email,
-                                      phone: phone,
-                                      educationalBackground: educationalBackground,
-                                    ),
-                                  ),
-                                );
-                              }
-                            },
+                            onPressed: _proceedToNextStep,
                             child: const Text("Next"),
                           ),
                         ],
@@ -205,5 +226,12 @@ class _RegisterStep2State extends State<RegisterStep2> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _majorController.dispose();
+    _yearGraduatedController.dispose();
+    super.dispose();
   }
 }
